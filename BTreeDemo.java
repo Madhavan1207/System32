@@ -201,3 +201,13 @@ public class BTreeDemo {
         }
     }
 }
+// TIME COMPLEXITY:
+// Insertion: O(log n)
+// Searching: O(log n)
+// Traversal: O(n)
+
+// SPACE COMPLEXITY:
+// Insertion: O(log n) - Recursive stack space
+// Searching: O(log n) - Recursive stack space
+// Traversal: O(log n) - Recursive stack space
+// Overall Tree Storage: O(n)

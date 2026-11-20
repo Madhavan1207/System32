@@ -111,3 +111,13 @@ public class FractionalKnapsack {
         sc.close();
     }
 }
+// TIME COMPLEXITY:
+// Creating the items array: O(n)
+// Sorting using Bubble Sort: O(n^2)
+// Selecting items: O(n)
+// Overall Time Complexity: O(n^2)
+
+// SPACE COMPLEXITY:
+// Items array: O(n)
+// Temporary variable: O(1)
+// Overall Space Complexity: O(n)

@@ -64,3 +64,17 @@ public class LCS {
         sc.close();
     }
 }
+
+// TIME COMPLEXITY:
+// Filling DP Table: O(m * n)
+// Reconstructing LCS: O(m + n)
+// Overall Time Complexity: O(m * n)
+
+// SPACE COMPLEXITY:
+// DP Table: O(m * n)
+// StringBuilder: O(min(m, n))
+// Overall Space Complexity: O(m * n)
+
+// Where:
+// - m = Length of first string
+// - n = Length of second string

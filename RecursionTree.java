@@ -35,3 +35,10 @@ public class RecursionTree {
         sc.close();
     }
 }
+
+// Time Complexity: O(log n)
+// The loop divides n by 2 in every iteration.
+
+// Space Complexity: O(1)
+// Only a constant amount of extra variables are used.
+// No recursion or additional data structures are used.

@@ -1,0 +1,1375 @@
+====================================================================
+  LINE-BY-LINE CODE EXPLANATION
+  (what each program does + what every line means)
+====================================================================
+
+HOW TO READ THIS FILE
+  For each program you get:
+    (A) WHAT THE PROGRAM DOES  - the big picture
+    (B) LINE-BY-LINE           - each line of code, then "->" and what
+                                 it means
+
+CONTENTS
+   0. Java basics used in every program (read this first)
+   1. BinarySearch
+   2. MergeSort
+   3. QuickSort
+   4. FractionalKnapsack
+   5. JobSequencing
+   6. KnapsackDynamicProgramming
+   7. LCS
+   8. MasterMethod
+   9. RecursionTree
+  10. BTreeDemo
+  11. BPlusTreeDemo
+
+
+====================================================================
+0. JAVA BASICS USED IN EVERY PROGRAM
+====================================================================
+
+import java.util.Scanner;
+  -> Brings in the Scanner class so the program can read keyboard
+     input. (java.util.* imports everything in that package.)
+
+public class Name { ... }
+  -> Every Java program lives in a class. The class name must match
+     the file name (BinarySearch.java -> class BinarySearch).
+
+public static void main(String[] args) { ... }
+  -> The entry point. Java starts running here.
+     public = visible everywhere, static = can run without creating
+     an object, void = returns nothing.
+
+Scanner sc = new Scanner(System.in);
+  -> Creates a Scanner connected to the keyboard (System.in).
+
+sc.nextInt()   -> reads one integer.
+sc.next()      -> reads one word (stops at a space).
+sc.nextLine()  -> reads a whole line of text.
+sc.close()     -> releases the keyboard stream when finished.
+
+System.out.print("...")    -> prints text, stays on the same line.
+System.out.println("...")  -> prints text, then moves to a new line.
+
+long start = System.nanoTime();
+  -> Reads the current time in nanoseconds (1 second = 1,000,000,000
+     ns). Called before and after the algorithm; "end - start" is
+     the time taken. (1 ms = 1,000,000 ns.)
+
+int[] arr = new int[n];
+  -> Creates an array of n integers, all starting at 0.
+
+// comment      -> ignored by Java, only for humans.
+
+
+====================================================================
+1. BINARY SEARCH  (BinarySearch.java)
+====================================================================
+
+(A) WHAT IT DOES
+  You type the size of a SORTED array, its elements, and a key. The
+  program finds the index of the key using binary search (check the
+  middle, throw away the half that cannot contain the key, repeat)
+  and prints the index or "Element not found", plus the time taken.
+
+(B) LINE BY LINE
+
+import java.util.Scanner;
+  -> Import Scanner for input.
+
+public class BinarySearch {
+  -> Start of the class.
+
+    public static void main(String[] args) {
+  -> Program starts here.
+
+        Scanner sc = new Scanner(System.in);
+  -> Create the keyboard reader.
+
+        System.out.print("Enter size of array: ");
+        int n = sc.nextInt();
+  -> Ask for and store the number of elements in n.
+
+        int arr[] = new int[n];
+  -> Create an array of size n. (int arr[] and int[] arr mean the
+     same thing in Java.)
+
+        System.out.println("Enter sorted array elements:");
+        for (int i = 0; i < n; i++) {
+            arr[i] = sc.nextInt();
+        }
+  -> Loop n times, reading each element into arr[0], arr[1], ...
+     The user MUST type them in sorted (ascending) order.
+
+        System.out.print("Enter element to search: ");
+        int key = sc.nextInt();
+  -> Read the value we want to find.
+
+        long start = System.nanoTime();
+  -> Start the timer.
+
+        int low = 0;
+        int high = n - 1;
+        int found = -1;
+  -> low  = first index of the search range.
+     high = last index of the search range.
+     found = answer index; -1 means "not found yet".
+
+        while (low <= high) {
+  -> Keep searching while the range still has at least one element.
+
+            int mid = (low + high) / 2;
+  -> Middle index of the current range (integer division drops any
+     decimal part).
+
+            if (arr[mid] == key) {
+                found = mid;
+                break;
+            }
+  -> Middle element equals the key: save its index and leave the loop.
+
+            else if (arr[mid] < key) {
+                low = mid + 1;
+            }
+  -> Middle element is smaller than the key, so the key (if present)
+     is to the RIGHT. Move low just past mid, discarding the left half.
+
+            else {
+                high = mid - 1;
+            }
+  -> Middle element is bigger, so the key is to the LEFT. Move high
+     just before mid, discarding the right half.
+
+        }
+  -> End of loop. Each pass halves the range, so it runs about
+     log2(n) times.
+
+        long end = System.nanoTime();
+  -> Stop the timer.
+
+        if (found != -1) {
+            System.out.println("Element found at index: " + found);
+        }
+        else {
+            System.out.println("Element not found");
+        }
+  -> If found was changed from -1, print its index; otherwise say
+     not found.
+
+        System.out.println("Execution time: " + (end - start) + " nanoseconds");
+  -> Print time taken.
+
+        sc.close();
+  -> Close the Scanner.
+
+EXAMPLE RUN
+  Size 7, elements 2 5 8 12 16 23 38, key 23:
+    low=0,high=6 -> mid=3 (12 < 23) -> low=4
+    low=4,high=6 -> mid=5 (23 == 23) -> found = 5
+  Output: Element found at index: 5
+
+NOTE: the comment at the bottom says O(n); the real complexity is
+O(log n). Space is O(1).
+
+
+====================================================================
+2. MERGE SORT  (MergeSort.java)
+====================================================================
+
+(A) WHAT IT DOES
+  Reads an array, sorts it with Merge Sort (split into halves, sort
+  each half recursively, merge the two sorted halves), and prints the
+  array before and after plus the time taken.
+
+(B) LINE BY LINE
+
+import java.util.Arrays;
+import java.util.Scanner;
+  -> Arrays gives Arrays.toString() to print an array nicely.
+
+public class MergeSort {
+
+--------------------------------------------------------------------
+METHOD 1: merge  (joins two sorted halves)
+--------------------------------------------------------------------
+
+    static void merge(int[] arr, int s , int e, int mid){
+  -> Merges arr[s..mid] (left half) and arr[mid+1..e] (right half),
+     both already sorted, into one sorted block arr[s..e].
+     s = start index, e = end index, mid = last index of left half.
+
+        int leftArrLen = mid-s+1;
+        int rightArrLen = e-mid;
+  -> Number of elements in the left half and in the right half.
+
+        int[] leftArr = new int[leftArrLen];
+        int[] rightArr = new int[rightArrLen];
+  -> Two temporary arrays to hold copies of each half.
+     (This is where the O(n) extra space comes from.)
+
+        int k = s;
+        for(int i=0;i<leftArrLen;i++){
+            leftArr[i] = arr[k];
+            k++;
+        }
+  -> Copy the left half from arr (starting at s) into leftArr.
+
+        k = mid+1;
+        for(int i=0;i<rightArrLen;i++){
+            rightArr[i] = arr[k];
+            k++;
+        }
+  -> Copy the right half (starting at mid+1) into rightArr.
+
+        int i = 0;
+        int j = 0;
+        k = s;
+  -> i = pointer in leftArr, j = pointer in rightArr,
+     k = position in arr where the next value will be written.
+
+        while(i<leftArrLen && j<rightArrLen){
+  -> While BOTH halves still have unused elements...
+
+            if(leftArr[i]>rightArr[j]){
+                arr[k] = rightArr[j];
+                j++;
+                k++;
+            }
+  -> If the left front is bigger, the right front is the smaller one:
+     write it to arr and advance j and k.
+
+            else{
+                arr[k] = leftArr[i];
+                i++;
+                k++;
+            }
+  -> Otherwise (left <= right) write the left value. Using <= (taking
+     from the left on ties) keeps merge sort STABLE.
+
+        }
+
+        while(i<leftArrLen){
+            arr[k] = leftArr[i];
+            i++;
+            k++;
+        }
+  -> Right half is used up: copy any remaining left elements.
+
+        while(j<rightArrLen){
+            arr[k] = rightArr[j];
+            j++;
+            k++;
+        }
+  -> Left half is used up: copy any remaining right elements.
+     (Only one of these two loops will actually run.)
+
+    }
+
+--------------------------------------------------------------------
+METHOD 2: mergesort  (the recursive splitter)
+--------------------------------------------------------------------
+
+    static void mergesort(int[] arr, int s, int e){
+        if(s>=e){
+            return;
+        }
+  -> BASE CASE: 0 or 1 element is already sorted, so stop.
+
+        int mid = (s+e)/2;
+  -> Middle index.
+
+        mergesort(arr, s, mid);
+        mergesort(arr,mid+1,e);
+  -> Recursively sort the left half, then the right half.
+
+        merge(arr,s,e,mid);
+  -> Merge the two now-sorted halves.
+    }
+
+--------------------------------------------------------------------
+METHOD 3: main
+--------------------------------------------------------------------
+
+        Scanner sc = new Scanner(System.in);
+        System.out.print("Enter size of an Array: ");
+        int n = sc.nextInt();
+        int[] arr = new int[n];
+  -> Read the size and create the array.
+
+        for(int i=0;i<arr.length;i++){
+            System.out.print("Enter element " +(i+1)+": ");
+            arr[i] = sc.nextInt();
+        }
+  -> Read each element (prompt shows 1-based numbers).
+
+        System.out.print("Array before sorting: ");
+        System.out.println(Arrays.toString(arr));
+  -> Print the original array like [5, 2, 9].
+
+        int s = 0;
+        int e = arr.length-1;
+  -> Whole array range: first index 0 to last index.
+
+        long startTime = System.nanoTime();
+        mergesort(arr,s,e);
+        long endTime = System.nanoTime();
+  -> Time only the sorting call.
+
+        System.out.print("Array after sorting: ");
+        System.out.println(Arrays.toString(arr));
+        System.out.println("Execution time: "+(endTime - startTime)+ " nanoseconds");
+        sc.close();
+  -> Print the sorted array and the time; close the scanner.
+
+TRACE of [38, 27, 43, 3]
+  mergesort(0,3): mid=1
+    mergesort(0,1): mid=0 -> sort [38] and [27] -> merge -> [27,38]
+    mergesort(2,3): mid=2 -> sort [43] and [3]  -> merge -> [3,43]
+    merge [27,38] and [3,43]:
+       3<27 -> 3 ; 27<43 -> 27 ; 38<43 -> 38 ; then 43
+    Result: [3, 27, 38, 43]
+
+Complexity: Time O(n log n) always. Space O(n).
+
+
+====================================================================
+3. QUICK SORT  (QuickSort.java)
+====================================================================
+
+(A) WHAT IT DOES
+  Reads an array and sorts it with Quick Sort: pick the first element
+  as the pivot, put it in its final sorted position with smaller-or-
+  equal elements on its left and larger ones on its right, then sort
+  the left and right parts recursively.
+
+(B) LINE BY LINE
+
+--------------------------------------------------------------------
+METHOD 1: partition
+--------------------------------------------------------------------
+
+    static int partition(int[] arr,int s, int e){
+  -> Works on arr[s..e]. Returns the final index of the pivot.
+
+        int partition = arr[s];
+  -> The pivot is the first element of the range.
+
+        int count = 0;
+        for(int i=s+1;i<=e;i++) {
+            if (partition >= arr[i]) {
+                count++;
+            }
+        }
+  -> Count how many elements (after the pivot) are <= pivot. These
+     must all end up to the left of the pivot.
+
+        int partitionIndex = s + count;
+  -> So the pivot's correct final position is s + count.
+
+        arr[s] = arr[partitionIndex];
+        arr[partitionIndex] = partition;
+  -> Swap the pivot into that position.
+
+        int i = s;
+        int j = e;
+  -> i starts at the left end, j at the right end.
+
+        while(i<partitionIndex && j>partitionIndex){
+  -> Continue while i is still on the left side of the pivot and j
+     is still on the right side.
+
+            while(arr[i]<=arr[partitionIndex]){
+                i++;
+            }
+  -> Move i right past every element that already belongs on the left
+     (<= pivot). Stops at an element bigger than pivot (wrong side).
+
+            while(arr[j]>arr[partitionIndex]){
+                j--;
+            }
+  -> Move j left past every element that belongs on the right
+     (> pivot). Stops at an element <= pivot (wrong side).
+
+            if(i<partitionIndex && j>partitionIndex){
+                int temp = arr[i];
+                arr[i] = arr[j];
+                arr[j] = temp;
+                i++;
+                j--;
+            }
+  -> If both wrongly placed elements are really on their own sides,
+     swap them (using temp) and move both pointers inward.
+
+        }
+        return partitionIndex;
+    }
+  -> Left of the pivot: all <= pivot. Right: all > pivot.
+
+--------------------------------------------------------------------
+METHOD 2: quicksort
+--------------------------------------------------------------------
+
+    static void quicksort(int[] arr,int s,int e){
+        if(s>=e){
+            return;
+        }
+  -> Base case: 0 or 1 element, nothing to sort.
+
+        int partitionIndex = partition(arr,s,e);
+  -> Place the pivot; get its position.
+
+        quicksort(arr,s,partitionIndex-1);
+        quicksort(arr,partitionIndex+1,e);
+  -> Sort everything left of the pivot and everything right of it.
+     The pivot itself is already in the correct place.
+    }
+
+--------------------------------------------------------------------
+METHOD 3: main  (identical in structure to MergeSort's main)
+--------------------------------------------------------------------
+  Reads n and the elements, prints the array before, times the call
+  quicksort(arr, 0, n-1), prints the array after, prints the time.
+
+TRACE of [4, 2, 7, 1, 9, 3], pivot = 4
+  Elements <= 4 after pivot: 2, 1, 3 -> count = 3
+  partitionIndex = 0 + 3 = 3
+  Swap arr[0] and arr[3]: [1, 2, 7, 4, 9, 3]
+  i=0 (1<=4) i=1 (2<=4) i=2 (7>4 stop); j=5 (3>4? no, stop at 5)
+  i<3 and j>3 -> swap arr[2], arr[5]: [1, 2, 3, 4, 9, 7]
+  Return 3. Left [1,2,3] and right [9,7] are sorted recursively.
+  Final: [1, 2, 3, 4, 7, 9]
+
+Complexity: average O(n log n); worst O(n^2) (e.g. already sorted
+input, since the first element is the pivot). In-place.
+
+
+====================================================================
+4. FRACTIONAL KNAPSACK  (FractionalKnapsack.java)
+====================================================================
+
+(A) WHAT IT DOES
+  You give the number of products, each product's weight and profit,
+  and the bag capacity. Items can be split. The program picks items
+  with the best profit-per-weight first, taking a fraction of the
+  last one if needed, and prints the chosen items and the maximum
+  profit.
+
+(B) LINE BY LINE
+
+public static double knapsack(int[] weights, int[] profits, int n, int capacity) {
+  -> Returns the maximum profit as a double (it can be fractional).
+
+        double[][] items = new double[n][4];
+  -> A table with n rows and 4 columns:
+     [0] product number, [1] weight, [2] profit, [3] profit/weight.
+
+        for (int i = 0; i < n; i++) {
+            items[i][0] = i + 1;
+            items[i][1] = weights[i];
+            items[i][2] = profits[i];
+            items[i][3] = (double) profits[i] / weights[i];
+        }
+  -> Fill the table. (double) forces decimal division; without it
+     60/10 style integer division would drop decimals.
+
+        for (int i = 0; i < n - 1; i++) {
+            for (int j = 0; j < n - i - 1; j++) {
+                if (items[j][3] < items[j + 1][3]) {
+                    double[] temp = items[j];
+                    items[j] = items[j + 1];
+                    items[j + 1] = temp;
+                }
+            }
+        }
+  -> BUBBLE SORT by ratio, highest first. If a row's ratio is smaller
+     than the next row's, swap the two whole rows via temp.
+     After this, items[0] has the best ratio.
+
+        double totalProfit = 0;
+        int remainingCapacity = capacity;
+  -> Running profit and how much room is left in the bag.
+
+        System.out.println("\nSelected Items:");
+  -> \n means "new line".
+
+        for (int i = 0; i < n; i++) {
+            if (remainingCapacity == 0) {
+                break;
+            }
+  -> Go through items best-first; stop once the bag is full.
+
+            if (items[i][1] <= remainingCapacity) {
+  -> The entire item fits.
+                remainingCapacity -= (int) items[i][1];
+                totalProfit += items[i][2];
+  -> Reduce remaining capacity by its weight; add its full profit.
+     (int) converts the double back to an integer.
+                System.out.println("Product " + (int) items[i][0] + ... + " | Fraction: 1.0");
+  -> Print the item and "Fraction: 1.0" (taken fully).
+
+            } else {
+  -> It does not fit completely.
+                double fraction = remainingCapacity / items[i][1];
+  -> Fraction of the item that fits = room left / its weight.
+                totalProfit += items[i][2] * fraction;
+  -> Add that fraction of its profit.
+                System.out.println( ... + " | Fraction: " + fraction);
+                remainingCapacity = 0;
+  -> Print it and mark the bag as full.
+            }
+        }
+        return totalProfit;
+    }
+
+main():
+  -> Reads n, then for each product its weight and profit, then the
+     capacity. Starts the timer, calls knapsack(), stops the timer,
+     prints "Maximum Profit" and the execution time.
+
+EXAMPLE
+  Products (weight, profit): (10,60) (20,100) (30,120), capacity 50
+  Ratios 6, 5, 4. Take 1 and 2 fully (weight 30), then 20/30 of
+  product 3 (profit 80). Maximum Profit = 240.0
+
+Complexity: O(n^2) because of bubble sort; space O(n).
+
+
+====================================================================
+5. JOB SEQUENCING  (JobSequencing.java)
+====================================================================
+
+(A) WHAT IT DOES
+  Each job needs 1 time unit and has a deadline and a profit. The
+  program chooses jobs and assigns time slots so every chosen job
+  finishes by its deadline and total profit is maximum. It prints the
+  schedule and total profit.
+
+(B) LINE BY LINE
+
+import java.util.*;
+  -> Imports Scanner and Arrays (the * means everything in java.util).
+
+    static class Job {
+        String id;
+        int deadline;
+        int profit;
+
+        Job(String id, int deadline, int profit) {
+            this.id = id;
+            this.deadline = deadline;
+            this.profit = profit;
+        }
+    }
+  -> A small class to bundle one job's data. The constructor (Job(...))
+     stores the three values; "this.id" means the object's own field,
+     "id" on the right is the parameter. "static" lets us use it
+     without creating a JobSequencing object.
+
+main():
+
+        int n = sc.nextInt();
+        Job[] jobs = new Job[n];
+  -> Read the number of jobs; make an array that will hold n Job
+     objects.
+
+        for (int i = 0; i < n; i++) {
+            System.out.print("Job " + (i + 1) + ": ");
+            String id = sc.next();
+            int deadline = sc.nextInt();
+            int profit = sc.nextInt();
+            jobs[i] = new Job(id, deadline, profit);
+        }
+  -> For each job read: ID (word), deadline, profit - IN THAT ORDER,
+     on one line like "J1 2 100". Create a Job object and store it.
+
+        long startTime = System.nanoTime();
+  -> Start timing (after input, so typing time is not counted).
+
+        Arrays.sort(jobs, (a, b) -> b.profit - a.profit);
+  -> Sort jobs by profit, highest first. (a, b) -> ... is a LAMBDA
+     (a small comparison function). If b.profit - a.profit is
+     positive, a is placed after b, giving descending order.
+
+        int maxDeadline = 0;
+        for (Job job : jobs) {
+            maxDeadline = Math.max(maxDeadline, job.deadline);
+        }
+  -> Find the largest deadline. "for (Job job : jobs)" is the
+     for-each loop: visit every job. This tells us how many time slots
+     can ever be used.
+
+        Job[] slots = new Job[maxDeadline];
+        int totalProfit = 0;
+  -> slots[0] is time 0-1, slots[1] is 1-2, ... All start null (empty).
+
+        for (Job job : jobs) {
+            for (int j = job.deadline - 1; j >= 0; j--) {
+                if (slots[j] == null) {
+                    slots[j] = job;
+                    totalProfit += job.profit;
+                    break;
+                }
+            }
+        }
+  -> For each job (best profit first): look for a free slot starting
+     at its deadline slot and moving EARLIER (j--). Put the job in the
+     first free one found, add its profit, and stop looking (break).
+     If none is free, the job is skipped. Placing as late as possible
+     keeps earlier slots open for other jobs.
+
+        long endTime = System.nanoTime();
+  -> Stop timing.
+
+        for (int i = 0; i < slots.length; i++) {
+            if (slots[i] != null) {
+                System.out.println("Time Slot " + (i + 1) + " -> " + i + " - " + (i + 1)
+                        + " -> " + slots[i].id + " | Profit = " + slots[i].profit);
+            }
+        }
+  -> Print each used slot, e.g. "Time Slot 2 -> 1 - 2 -> 1 | Profit = 100".
+
+        System.out.println("\nMaximum Profit = " + totalProfit);
+        System.out.println("\nExecution Time = " + (endTime - startTime) + " nanoseconds");
+  -> Print total profit and the time.
+
+EXAMPLE (from the comments: IDs 1..5, deadlines 2,1,2,1,3, profits
+100,19,27,25,15). Type each job as "id deadline profit":
+   1 2 100
+   2 1 19
+   3 2 27
+   4 1 25
+   5 3 15
+Sorted by profit: 1(100), 3(27), 4(25), 2(19), 5(15).
+  Job 1 -> slot index 1.  Job 3 -> index 1 taken, so index 0.
+  Job 4 and 2 (deadline 1) -> slot 0 taken, skipped.
+  Job 5 -> slot index 2.
+Maximum Profit = 100 + 27 + 15 = 142
+
+Complexity: O(n log n + n*d), d = max deadline.
+
+
+====================================================================
+6. 0/1 KNAPSACK, DYNAMIC PROGRAMMING (KnapsackDynamicProgramming.java)
+====================================================================
+
+(A) WHAT IT DOES
+  Each item is either taken whole or left. It builds a table that
+  stores the best value for every (items-so-far, capacity) pair, then
+  looks back through the table to find which items were chosen. It
+  prints the selected item IDs, total weight and maximum value.
+
+(B) LINE BY LINE
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Scanner;
+  -> List/ArrayList: a resizable list used to store the chosen items.
+
+public static void solveKnapsack(int[] weights, int[] values, int capacity) {
+        int n = weights.length;
+  -> Number of items = length of the weights array.
+
+        long startTime = System.nanoTime();
+        int[][] dp = new int[n + 1][capacity + 1];
+  -> Start the timer. dp has (n+1) rows and (capacity+1) columns.
+     dp[i][w] = best value using the first i items with capacity w.
+     Row 0 and column 0 stay 0 (no items, or no room).
+
+        for (int i = 1; i <= n; i++) {
+            for (int w = 1; w <= capacity; w++) {
+  -> Fill the table: item i (1..n), capacity w (1..capacity).
+
+                if (weights[i - 1] <= w) {
+  -> Item i (stored at index i-1) fits in capacity w.
+                    dp[i][w] = Math.max(
+                            dp[i - 1][w],
+                            values[i - 1] + dp[i - 1][w - weights[i - 1]]
+                    );
+  -> Take the BETTER of:
+       dp[i-1][w]  = skip this item
+       value + dp[i-1][w - weight] = take it: gain its value plus the
+       best we can do with the remaining capacity using earlier items.
+                } else {
+                    dp[i][w] = dp[i - 1][w];
+                }
+  -> Too heavy: we cannot take it, so copy the value without it.
+            }
+        }
+
+        List<Integer> selectedItems = new ArrayList<>();
+        int currentCapacity = capacity;
+        int totalWeight = 0;
+  -> Prepare to find which items were used. currentCapacity shrinks as
+     we pick items.
+
+        for (int i = n; i > 0 && currentCapacity > 0; i--) {
+            if (dp[i][currentCapacity] != dp[i - 1][currentCapacity]) {
+                selectedItems.add(i);
+                totalWeight += weights[i - 1];
+                currentCapacity -= weights[i - 1];
+            }
+        }
+  -> BACKTRACK from the last item. If the value at row i differs from
+     the row above, item i must have been taken: record its ID, add
+     its weight, and reduce the capacity. If equal, item i was not
+     needed. Items are therefore listed from last to first.
+
+        long endTime = System.nanoTime();
+        long executionTime = endTime - startTime;
+  -> Stop the timer and compute the duration.
+
+        System.out.println(...) lines
+  -> Print a formatted report: capacity, number of items, selected
+     IDs, total weight, maximum value (dp[n][capacity]), a check that
+     totalWeight <= capacity ("PASSED"/"FAILED"), time in ns and ms
+     (executionTime / 1_000_000.0), and the complexity.
+     The underscores in 1_000_000.0 are just for readability.
+
+main():
+  -> Reads capacity and n, then each item's weight and value. Prints a
+     table of the items (System.printf("%-2d | %-11d ...") is
+     formatted printing: %d = integer, %-11d = left-aligned in 11
+     characters, %n = newline) and calls solveKnapsack().
+
+EXAMPLE
+  Capacity 50; items (weight,value): 1(10,60) 2(20,100) 3(30,120)
+  dp[3][50] = 220.
+  Backtrack: dp[3][50]=220 != dp[2][50]=160 -> take item 3, cap=20
+             dp[2][20]=100 != dp[1][20]=60  -> take item 2, cap=0
+  Selected Items (ID): [3, 2]    Total weight 50    Max value 220
+
+Complexity: Time O(n*W), Space O(n*W).
+
+
+====================================================================
+7. LONGEST COMMON SUBSEQUENCE  (LCS.java)
+====================================================================
+
+(A) WHAT IT DOES
+  Reads two strings and finds the longest sequence of characters that
+  appears in both, in the same order (not necessarily adjacent). It
+  prints that subsequence and its length.
+
+(B) LINE BY LINE
+
+        String str1 = sc.nextLine();
+        String str2 = sc.nextLine();
+  -> Read two full lines of text (spaces allowed).
+
+        int m = str1.length();
+        int n = str2.length();
+  -> Lengths of the two strings.
+
+        long startTime = System.nanoTime();
+        int[][] dp = new int[m + 1][n + 1];
+  -> dp[i][j] = LCS length of the first i characters of str1 and the
+     first j characters of str2. Row 0 / column 0 are 0 (empty
+     string).
+
+        for (int i = 1; i <= m; i++) {
+            for (int j = 1; j <= n; j++) {
+  -> Go through every pair (i, j).
+
+                if (str1.charAt(i - 1) == str2.charAt(j - 1)) {
+                    dp[i][j] = dp[i - 1][j - 1] + 1;
+  -> The current characters match (charAt(i-1) because strings are
+     0-indexed, table is 1-indexed). Extend the previous LCS by 1.
+                } else {
+                    dp[i][j] = Math.max(dp[i - 1][j], dp[i][j - 1]);
+  -> No match: take the better of dropping a character from str1
+     (up) or from str2 (left).
+                }
+            }
+        }
+
+        int i = m;
+        int j = n;
+        StringBuilder lcs = new StringBuilder();
+  -> Start at the bottom-right of the table to rebuild the actual
+     string. StringBuilder is a fast way to build text piece by piece.
+
+        while (i > 0 && j > 0) {
+            if (str1.charAt(i - 1) == str2.charAt(j - 1)) {
+                lcs.append(str1.charAt(i - 1));
+                i--;
+                j--;
+  -> Characters match: it is part of the LCS. Save it, move diagonally
+     up-left.
+            } else if (dp[i - 1][j] >= dp[i][j - 1]) {
+                i--;
+  -> Otherwise move to whichever neighbour has the larger value; up
+     (drop a char of str1) if it is at least as big...
+            } else {
+                j--;
+  -> ...or left (drop a char of str2).
+            }
+        }
+
+        lcs.reverse();
+  -> We collected characters from the end backwards, so reverse them.
+
+        long endTime = System.nanoTime();
+        long executionTime = endTime - startTime;
+  -> Stop the timer.
+
+        System.out.println("\nLongest Common Subsequence: " + lcs);
+        System.out.println("Length of LCS: " + dp[m][n]);
+        + execution time in ns and ms
+  -> Print the result; dp[m][n] holds the final LCS length.
+
+EXAMPLE
+  str1 = AGGTAB, str2 = GXTXAYB
+  LCS = GTAB, Length = 4
+
+Complexity: Time O(m*n), Space O(m*n).
+
+
+====================================================================
+8. MASTER METHOD  (MasterMethod.java)
+====================================================================
+
+(A) WHAT IT DOES
+  For a recurrence T(n) = a*T(n/b) + n^k, you give a, b and k. The
+  program uses the Master Theorem to print which case applies and the
+  resulting time complexity.
+
+(B) LINE BY LINE
+
+        int a = sc.nextInt();   -> number of subproblems.
+        int b = sc.nextInt();   -> factor by which n shrinks (n/b).
+        int k = sc.nextInt();   -> power in f(n) = n^k (the extra work).
+
+        long startTime = System.nanoTime();
+        double logValue = Math.log(a) / Math.log(b);
+  -> Computes log base b of a. Java only has the natural log
+     (Math.log), so we use the change-of-base formula:
+     log_b(a) = ln(a) / ln(b).
+
+        System.out.println("T(n) = " + a + "T(n/" + b + ") + n^" + k);
+        System.out.println("\nlog_b(a) = " + logValue);
+  -> Print the recurrence and the computed log value.
+
+        if (k < logValue) {
+            System.out.println("Case 1: ");
+            System.out.println("Time Complexity: O(n^" + String.format("%.2f", logValue) + ")");
+        }
+  -> Case 1: the recursive part dominates. Answer O(n^log_b(a)).
+     String.format("%.2f", x) rounds to 2 decimal places.
+
+        else if (Math.abs(k - logValue) < 0.000001) {
+            System.out.println("Case 2: ");
+            System.out.println("Time Complexity: O(n^" + k + " log n)");
+        }
+  -> Case 2: k equals log_b(a). Computers store decimals approximately,
+     so instead of k == logValue the code checks the difference is
+     tiny. Answer O(n^k log n).
+
+        else {
+            System.out.println("Case 3: ");
+            System.out.println("Time Complexity: O(n^" + k + ")");
+        }
+  -> Case 3: k > log_b(a), the top-level work dominates. Answer O(n^k).
+
+        long endTime = System.nanoTime();
+        System.out.println("Execution Time: "+(endTime - startTime)+ " nanoseconds");
+        sc.close();
+
+EXAMPLES
+  a=2, b=2, k=1: log=1.0  -> Case 2 -> O(n^1 log n)   (merge sort)
+  a=4, b=2, k=1: log=2.0  -> Case 1 -> O(n^2.00)
+  a=1, b=2, k=1: log=0.0  -> Case 3 -> O(n^1)
+
+LIMITS: only integer k; b must be >= 2.
+
+
+====================================================================
+9. RECURSION TREE  (RecursionTree.java)
+====================================================================
+
+(A) WHAT IT DOES
+  Simulates the recursion tree of T(n) = T(n/2) + n. For each level it
+  prints the problem size and work done, then totals the work.
+
+(B) LINE BY LINE
+
+        int n = sc.nextInt();
+  -> Read n (the problem size).
+
+        int level = 0;
+        int totalWork = 0;
+  -> level counts tree levels; totalWork adds up the work.
+
+        long startTime = System.nanoTime();
+        while (n > 0) {
+  -> Keep going until the problem size shrinks to 0.
+
+            int work = n;
+            totalWork += work;
+  -> Work at this level equals the problem size (the "+ n" term).
+
+            System.out.println("Level " + level + ": Problem Size = " + n + ", Work = " + work);
+  -> Print the details for this level.
+
+            n = n / 2;
+            level++;
+  -> Halve n (integer division: 1/2 becomes 0, which ends the loop)
+     and move to the next level.
+        }
+        long endTime = System.nanoTime();
+
+        System.out.println("\nTotal Levels: " + level);
+        System.out.println("Total Work: " + totalWork);
+        System.out.println("Execution Time: "+(endTime-startTime)+ " nanoseconds");
+        System.out.println("Time Complexity: O(n)");
+  -> Print the summary. "O(n)" is the answer for the recurrence since
+     n + n/2 + n/4 + ... is about 2n.
+
+EXAMPLE (n = 16)
+  Level 0: 16 | Level 1: 8 | Level 2: 4 | Level 3: 2 | Level 4: 1
+  Total Levels: 5   Total Work: 31
+
+(The comment "O(log n)" at the bottom refers to the number of loop
+iterations of this program, which is log2(n).)
+
+
+====================================================================
+10. B-TREE  (BTreeDemo.java)
+====================================================================
+
+(A) WHAT IT DOES
+  A menu-driven program implementing a B-Tree of integers. You enter
+  the minimum degree t, then choose Insert / Search / Display / Exit.
+  Display prints all keys in sorted order. On exit it prints the time.
+
+  Rules: each node holds at most 2t-1 keys; a node with k keys has
+  k+1 children (if not a leaf); keys inside a node are sorted; all
+  leaves are on the same level.
+
+(B) LINE BY LINE
+
+--------------------------------------------------------------------
+CLASS BTreeNode  (one node)
+--------------------------------------------------------------------
+
+class BTreeNode {
+    int[] keys;        -> the keys stored in this node.
+    int t;             -> minimum degree.
+    BTreeNode[] child; -> references to child nodes.
+    int n;             -> how many keys are currently in use.
+    boolean leaf;      -> true if the node has no children.
+
+    BTreeNode(int t, boolean leaf) {
+        this.t = t;
+        this.leaf = leaf;
+        keys = new int[2 * t - 1];
+        child = new BTreeNode[2 * t];
+        n = 0;
+    }
+  -> Constructor: store t and leaf; create room for up to 2t-1 keys
+     and 2t children; start with 0 keys.
+
+----- traverse() -----
+    void traverse() {
+        int i;
+        for (i = 0; i < n; i++) {
+            if (!leaf)
+                child[i].traverse();
+            System.out.print(keys[i] + " ");
+        }
+        if (!leaf)
+            child[i].traverse();
+    }
+  -> In-order traversal (gives sorted output). For each key: first
+     print everything in the child to its left (if not a leaf), then
+     the key itself. After the loop, visit the last child (right of
+     the last key).
+
+----- search(key) -----
+    BTreeNode search(int key) {
+        int i = 0;
+        while (i < n && key > keys[i])
+            i++;
+  -> Find the first key that is >= the target.
+
+        if (i < n && keys[i] == key)
+            return this;
+  -> If it equals the target, found: return this node.
+
+        if (leaf)
+            return null;
+  -> A leaf has nowhere else to look: not found.
+
+        return child[i].search(key);
+    }
+  -> Otherwise the key must be in the child at position i; search it.
+
+----- insertNonFull(key) -----  (node is guaranteed NOT full)
+    void insertNonFull(int key) {
+        int i = n - 1;
+  -> i = index of the rightmost key.
+
+        if (leaf) {
+            while (i >= 0 && keys[i] > key) {
+                keys[i + 1] = keys[i];
+                i--;
+            }
+            keys[i + 1] = key;
+            n++;
+  -> LEAF: shift keys larger than the new key one place right, drop
+     the new key into the gap, increase the key count.
+
+        } else {
+            while (i >= 0 && keys[i] > key)
+                i--;
+            i++;
+  -> INTERNAL: find the child where the key belongs (i ends as that
+     child's index).
+
+            if (child[i].n == 2 * t - 1) {
+                splitChild(i, child[i]);
+                if (keys[i] < key)
+                    i++;
+            }
+  -> If that child is full, split it first. The middle key moves up
+     into this node at position i; if the new key is bigger than it,
+     go to the right half instead.
+
+            child[i].insertNonFull(key);
+        }
+    }
+  -> Recurse into the (non-full) child.
+
+----- splitChild(i, y) -----  (split full child y, which is child[i])
+    void splitChild(int i, BTreeNode y) {
+        BTreeNode z = new BTreeNode(t, y.leaf);
+        z.n = t - 1;
+  -> New node z (same leaf-ness as y) will take the upper half.
+
+        for (int j = 0; j < t - 1; j++)
+            z.keys[j] = y.keys[j + t];
+  -> Copy y's upper t-1 keys into z.
+
+        if (!y.leaf) {
+            for (int j = 0; j < t; j++)
+                z.child[j] = y.child[j + t];
+        }
+  -> If y has children, move its upper t children to z as well.
+
+        y.n = t - 1;
+  -> y keeps only its lower t-1 keys.
+
+        for (int j = n; j >= i + 1; j--)
+            child[j + 1] = child[j];
+        child[i + 1] = z;
+  -> Shift this node's children right and insert z after y.
+
+        for (int j = n - 1; j >= i; j--)
+            keys[j + 1] = keys[j];
+        keys[i] = y.keys[t - 1];
+        n++;
+  -> Shift this node's keys right and move y's MIDDLE key (index t-1)
+     up into this node. This node now has one more key.
+    }
+}
+
+--------------------------------------------------------------------
+CLASS BTree  (the whole tree)
+--------------------------------------------------------------------
+
+class BTree {
+    BTreeNode root;
+    int t;
+    BTree(int t) { this.t = t; root = null; }
+  -> Keeps the root and t. Empty tree = null root.
+
+    void insert(int key) {
+        if (root == null) {
+            root = new BTreeNode(t, true);
+            root.keys[0] = key;
+            root.n = 1;
+  -> First key: make a leaf root containing it.
+
+        } else {
+            if (root.n == 2 * t - 1) {
+  -> Root is full: the tree must grow taller.
+                BTreeNode s = new BTreeNode(t, false);
+                s.child[0] = root;
+                s.splitChild(0, root);
+  -> Create a new empty internal root s, make the old root its first
+     child, and split it (middle key moves into s).
+
+                int i = 0;
+                if (s.keys[0] < key)
+                    i++;
+                s.child[i].insertNonFull(key);
+                root = s;
+  -> Choose the correct half (left or right), insert there, then make
+     s the new root.
+
+            } else {
+                root.insertNonFull(key);
+            }
+        }
+    }
+  -> Root not full: just insert normally.
+
+    void search(int key) {
+        if (root == null || root.search(key) == null)
+            System.out.println(key + " not found");
+        else
+            System.out.println(key + " found");
+    }
+  -> Print found / not found.
+
+    void traverse() {
+        if (root != null)
+            root.traverse();
+        System.out.println();
+    }
+  -> Print all keys in order, then a newline.
+}
+
+--------------------------------------------------------------------
+CLASS BTreeDemo  (menu)
+--------------------------------------------------------------------
+
+  -> Reads t; if t < 2 prints an error and exits. Creates the tree and
+     starts the timer. while(true) loop shows the menu:
+       case 1: read a key, tree.insert(key)
+       case 2: read a key, tree.search(key)
+       case 3: print "B-Tree elements: " then tree.traverse()
+       case 4: stop timer, print execution time (ns and ms), close the
+               scanner, return (ends the program)
+       default: "Invalid choice!"
+  -> The break statements stop the switch from falling through to the
+     next case.
+  -> NOTE: time shown includes the time you spent typing at the menu.
+
+EXAMPLE (t = 2): insert 10, 20, 30, 40
+  After 10, 20, 30: root [10 20 30] (full).
+  Insert 40: root is full -> new root, middle key 20 moves up:
+            [20]
+           /    \
+       [10]     [30 40]
+  Display: 10 20 30 40
+
+
+====================================================================
+11. B+ TREE  (BPlusTreeDemo.java)
+====================================================================
+
+(A) WHAT IT DOES
+  A menu-driven B+ Tree of integers. You enter the order (maximum
+  children per node, minimum 3), then Insert / Search / Display /
+  Exit. In a B+ Tree ALL real keys sit in leaf nodes; internal nodes
+  only hold copies of keys as signposts; leaves are chained together
+  so Display just walks along the leaves in sorted order.
+
+(B) LINE BY LINE
+
+--------------------------------------------------------------------
+CLASS BPlusNode
+--------------------------------------------------------------------
+
+class BPlusNode {
+    int[] keys;           -> keys in the node.
+    BPlusNode[] children; -> child references (internal nodes).
+    BPlusNode next;       -> link to the next leaf on the right.
+    int n;                -> number of keys in use.
+    boolean leaf;         -> true for leaf nodes.
+
+    BPlusNode(int order, boolean leaf) {
+        keys = new int[order];
+        children = new BPlusNode[order + 1];
+        this.leaf = leaf;
+        n = 0;
+    }
+  -> Max keys is order-1; arrays are made one slot larger so a shift
+     during insertion never goes out of bounds.
+
+--------------------------------------------------------------------
+CLASS BPlusTree
+--------------------------------------------------------------------
+
+    BPlusTree(int order) {
+        this.order = order;
+        root = new BPlusNode(order, true);
+    }
+  -> Starts with an empty LEAF as the root.
+
+----- insert(key) -----
+    void insert(int key) {
+        if (root.n == order - 1) {
+            BPlusNode newRoot = new BPlusNode(order, false);
+            newRoot.children[0] = root;
+            splitChild(newRoot, 0);
+            root = newRoot;
+        }
+        insertNonFull(root, key);
+    }
+  -> If the root is full (order-1 keys), create a new internal root,
+     make the old root its child, split it, and make it the new
+     root. Then insert into a root that is guaranteed to have room.
+
+----- insertNonFull(node, key) -----
+    void insertNonFull(BPlusNode node, int key) {
+        if (node.leaf) {
+            int i = node.n - 1;
+            while (i >= 0 && node.keys[i] > key) {
+                node.keys[i + 1] = node.keys[i];
+                i--;
+            }
+  -> LEAF: shift larger keys right to open a gap.
+
+            if (i >= 0 && node.keys[i] == key) {
+                System.out.println("Duplicate key not allowed!");
+                return;
+            }
+  -> If the key just before the gap equals the new key, it is a
+     duplicate: reject it. (n is not increased, so nothing is stored.)
+
+            node.keys[i + 1] = key;
+            node.n++;
+  -> Otherwise insert the key and count it.
+
+        } else {
+            int i = 0;
+            while (i < node.n && key >= node.keys[i])
+                i++;
+  -> INTERNAL: find which child to enter. Equal keys go RIGHT (>=),
+     because the separator is a copy of the first key of the right
+     child.
+
+            if (node.children[i].n == order - 1) {
+                splitChild(node, i);
+                if (key >= node.keys[i])
+                    i++;
+            }
+  -> Split the child first if it is full; then re-decide left/right
+     using the new separator now at keys[i].
+
+            insertNonFull(node.children[i], key);
+        }
+    }
+  -> Recurse down.
+
+----- splitChild(parent, index) -----
+    void splitChild(BPlusNode parent, int index) {
+        BPlusNode left = parent.children[index];
+        BPlusNode right = new BPlusNode(order, left.leaf);
+        int mid = order / 2;
+  -> left = the full node; right = new node for its upper half;
+     mid = where to cut.
+
+        if (left.leaf) {
+            right.n = left.n - mid;
+            for (int j = 0; j < right.n; j++)
+                right.keys[j] = left.keys[mid + j];
+            left.n = mid;
+  -> LEAF split: right gets keys from position mid onward; left keeps
+     the first mid keys.
+
+            right.next = left.next;
+            left.next = right;
+  -> Insert right into the leaf chain right after left.
+
+            for (int j = parent.n; j > index; j--) {
+                parent.keys[j] = parent.keys[j - 1];
+                parent.children[j + 1] = parent.children[j];
+            }
+  -> Make room in the parent by shifting keys and children right.
+
+            parent.keys[index] = right.keys[0];
+  -> COPY the first key of the right leaf up as the separator. The
+     key STAYS in the leaf (data must remain in leaves).
+
+        } else {
+            int promoted = left.keys[mid];
+            right.n = left.n - mid - 1;
+            for (int j = 0; j < right.n; j++)
+                right.keys[j] = left.keys[mid + 1 + j];
+            for (int j = 0; j <= right.n; j++)
+                right.children[j] = left.children[mid + 1 + j];
+            left.n = mid;
+  -> INTERNAL split: the middle key is promoted (MOVED, not kept in
+     either half); keys and children after it go to right.
+
+            for (int j = parent.n; j > index; j--) {
+                parent.keys[j] = parent.keys[j - 1];
+                parent.children[j + 1] = parent.children[j];
+            }
+            parent.keys[index] = promoted;
+        }
+  -> Shift the parent's entries and put the promoted key in.
+
+        parent.children[index + 1] = right;
+        parent.n++;
+    }
+  -> Attach the new right node next to left; parent has one more key.
+
+----- search(key) -----
+    boolean search(int key) {
+        BPlusNode current = root;
+        while (!current.leaf) {
+            int i = 0;
+            while (i < current.n && key >= current.keys[i])
+                i++;
+            current = current.children[i];
+        }
+  -> Walk down from the root, always choosing the child by comparing
+     with separators, until a leaf is reached.
+
+        for (int i = 0; i < current.n; i++) {
+            if (current.keys[i] == key)
+                return true;
+        }
+        return false;
+    }
+  -> Scan the leaf for the key.
+
+----- display() -----
+    void display() {
+        BPlusNode current = root;
+        while (!current.leaf)
+            current = current.children[0];
+  -> Go down the leftmost path to the first leaf.
+
+        System.out.print("B+ Tree elements: ");
+        while (current != null) {
+            for (int i = 0; i < current.n; i++)
+                System.out.print(current.keys[i] + " ");
+            current = current.next;
+        }
+        System.out.println();
+    }
+  -> Print each leaf's keys, then follow "next" to the next leaf until
+     there are none. Output is sorted automatically.
+
+--------------------------------------------------------------------
+CLASS BPlusTreeDemo  (menu)
+--------------------------------------------------------------------
+  -> Reads the order; if order < 3 prints an error and exits. Creates
+     the tree, starts the timer, loops the menu:
+       1 Insert, 2 Search (prints "found"/"not found"),
+       3 Display, 4 Exit (prints time in ns and ms).
+
+EXAMPLE (order = 4, max 3 keys per node): insert 10, 20, 30, 40
+  After 10,20,30: root leaf [10 20 30] (full).
+  Insert 40: root full -> new root; leaf splits (mid = 2):
+                   [30]
+                  /    \
+           [10 20] --> [30 40]
+  The 30 in the root is a COPY used for navigation; the real 30 is in
+  the right leaf. Display: 10 20 30 40
+
+--------------------------------------------------------------------
+B-TREE vs B+ TREE IN ONE LOOK
+--------------------------------------------------------------------
+  B-Tree : keys live in every node; on a split the middle key MOVES up.
+  B+ Tree: real keys only in leaves; on a LEAF split the key is COPIED
+           up; leaves are linked, so display/range scans are easy.
+
+====================================================================
+  END
+====================================================================

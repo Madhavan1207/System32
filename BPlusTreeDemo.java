@@ -222,3 +222,13 @@ public class BPlusTreeDemo {
         }
     }
 }
+// TIME COMPLEXITY:
+// Insertion: O(log n)
+// Searching: O(log n)
+// Display: O(n)
+
+// SPACE COMPLEXITY:
+// Insertion: O(log n) - Recursive stack space
+// Searching: O(1)
+// Display: O(1)
+// Overall Tree Storage: O(n)

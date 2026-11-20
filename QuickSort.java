@@ -65,3 +65,16 @@ public class QuickSort {
         sc.close();
     }
 }
+
+// Time Complexity:
+// Best Case: O(n log n)
+// Average Case: O(n log n)
+// Worst Case: O(n^2) - when the pivot repeatedly becomes the smallest or largest element.
+
+// Space Complexity:
+// Best Case: O(log n) - recursion stack.
+// Average Case: O(log n) - recursion stack.
+// Worst Case: O(n) - recursion stack due to unbalanced partitions.
+
+// Auxiliary Space: O(log n) on average, O(n) in the worst case.
+// Quick Sort is an in-place sorting algorithm.

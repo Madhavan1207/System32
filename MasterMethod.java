@@ -42,3 +42,11 @@ public class MasterMethod {
         sc.close();
     }
 }
+// TIME COMPLEXITY:
+// Calculating log_b(a): O(1)
+// Comparing Master Theorem cases: O(1)
+// Overall Time Complexity: O(1)
+
+// SPACE COMPLEXITY:
+// Uses only a fixed number of variables
+// Overall Space Complexity: O(1)

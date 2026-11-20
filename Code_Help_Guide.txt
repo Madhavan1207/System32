@@ -1,0 +1,640 @@
+====================================================================
+  HELP GUIDE: DAA / DATA STRUCTURES JAVA PROGRAMS
+====================================================================
+
+CONTENTS
+  0. How to compile and run
+  1. Things every program has in common
+  2. Quick complexity cheat sheet
+  3. BinarySearch
+  4. MergeSort
+  5. QuickSort
+  6. FractionalKnapsack (Greedy)
+  7. JobSequencing (Greedy)
+  8. KnapsackDynamicProgramming (0/1 Knapsack)
+  9. LCS (Longest Common Subsequence)
+ 10. MasterMethod
+ 11. RecursionTree
+ 12. BTreeDemo (B-Tree)
+ 13. BPlusTreeDemo (B+ Tree)
+ 14. About the .class files
+ 15. Mistakes / things to watch out for in the code
+ 16. Common viva questions
+
+
+====================================================================
+0. HOW TO COMPILE AND RUN
+====================================================================
+
+Every program is run the same way. In a terminal, go to the folder
+containing the files, then:
+
+    javac BinarySearch.java
+    java BinarySearch
+
+(Replace BinarySearch with the file name without ".java".)
+
+- "javac" compiles the .java file into .class files (bytecode).
+- "java" runs the compiled class that contains main().
+- The class name must match the file name for the public class.
+
+
+====================================================================
+1. THINGS EVERY PROGRAM HAS IN COMMON
+====================================================================
+
+a) Scanner sc = new Scanner(System.in);
+   Reads input typed by the user. sc.nextInt() reads an integer,
+   sc.next() reads one word, sc.nextLine() reads a whole line.
+   sc.close() at the end releases the input stream.
+
+b) Timing the code
+       long start = System.nanoTime();
+       ... algorithm ...
+       long end = System.nanoTime();
+       end - start   -> time taken in nanoseconds
+   Divide by 1,000,000.0 to get milliseconds.
+   Note: for small inputs the time is tiny and varies from run to
+   run. It is only a rough measure, not a precise benchmark.
+
+c) The complexity comments at the bottom of each file
+   They summarise time and space complexity (Big-O). Section 2 below
+   has them all in one table.
+
+
+====================================================================
+2. QUICK COMPLEXITY CHEAT SHEET
+====================================================================
+
+Program                  Time                      Space
+-----------------------  ------------------------  ----------------
+BinarySearch             O(log n)  (best O(1))     O(1)
+MergeSort                O(n log n) all cases      O(n)
+QuickSort                avg O(n log n)            O(log n) avg
+                         worst O(n^2)              O(n) worst
+FractionalKnapsack       O(n^2) (bubble sort)      O(n)
+                         O(n log n) if you use a
+                         better sort
+JobSequencing            O(n log n + n*d)          O(n + d)
+Knapsack DP (0/1)        O(n * W)                  O(n * W)
+LCS                      O(m * n)                  O(m * n)
+MasterMethod             O(1)                      O(1)
+RecursionTree            O(log n) loop iterations  O(1)
+B-Tree insert/search     O(log n)                  O(n) storage
+B+ Tree insert/search    O(log n)                  O(n) storage
+
+
+====================================================================
+3. BINARY SEARCH  (BinarySearch.java)
+====================================================================
+
+WHAT IT DOES
+  Finds a key in a SORTED array by repeatedly halving the search
+  range.
+
+HOW IT WORKS
+  1. low = 0, high = n-1.
+  2. mid = (low + high) / 2.
+  3. If arr[mid] == key  -> found, stop.
+     If arr[mid] <  key  -> key must be on the right: low = mid + 1.
+     If arr[mid] >  key  -> key must be on the left : high = mid - 1.
+  4. Repeat while low <= high. If the loop ends, key is not present.
+
+EXAMPLE
+  Array: 2 5 8 12 16 23 38   Key: 23
+  low=0 high=6 mid=3 -> 12 < 23 -> low=4
+  low=4 high=6 mid=5 -> 23 == 23 -> found at index 5
+
+INPUT FORMAT
+  Enter size of array, then the elements IN SORTED ORDER, then key.
+
+IMPORTANT
+  - The array MUST be sorted, otherwise the result is wrong.
+  - The comment at the bottom of the file says "Time Complexity:
+    O(n)". That is a mistake. Binary search is O(log n), because
+    the search range halves each step. Best case is O(1).
+  - Space is O(1): only a few variables, no extra arrays.
+  - Tiny note: (low + high) / 2 can overflow for huge arrays.
+    The safe form is low + (high - low) / 2. Not a concern here.
+
+
+====================================================================
+4. MERGE SORT  (MergeSort.java)
+====================================================================
+
+WHAT IT DOES
+  Sorts an array using Divide and Conquer.
+
+HOW IT WORKS
+  mergesort(arr, s, e):
+    - If s >= e (0 or 1 element) -> already sorted, return.
+    - mid = (s + e) / 2
+    - mergesort left half  (s .. mid)
+    - mergesort right half (mid+1 .. e)
+    - merge the two sorted halves
+
+  merge(arr, s, e, mid):
+    - Copies the left half into leftArr and the right half into
+      rightArr.
+    - Uses two pointers i (left) and j (right). Repeatedly copies
+      the smaller front element back into arr.
+    - Copies whatever is left over from either side.
+
+EXAMPLE
+  [38, 27, 43, 3]
+  split -> [38, 27] and [43, 3]
+  split -> [38] [27]  and [43] [3]
+  merge -> [27, 38]   and [3, 43]
+  merge -> [3, 27, 38, 43]
+
+RECURRENCE
+  T(n) = 2T(n/2) + O(n)  ->  O(n log n)   (Master Theorem, Case 2)
+
+NOTES
+  - Time is O(n log n) in best, average AND worst case.
+  - Space is O(n) for the temporary arrays, plus O(log n) recursion
+    stack.
+  - It is STABLE: equal elements keep their original order (because
+    when leftArr[i] == rightArr[j], the code takes from the left).
+  - Parameter order is merge(arr, s, e, mid), which is slightly
+    unusual. Watch the order when calling it.
+
+
+====================================================================
+5. QUICK SORT  (QuickSort.java)
+====================================================================
+
+WHAT IT DOES
+  Sorts an array using Divide and Conquer. Picks a pivot, places it
+  in its correct final position, then sorts the two sides.
+
+HOW partition() WORKS
+  1. Pivot = first element arr[s].
+  2. Count how many elements after it are <= pivot ("count").
+  3. The pivot's final position is partitionIndex = s + count.
+  4. Swap the pivot into that position.
+  5. Now fix the sides with two pointers:
+       i from the left, j from the right.
+       Move i right while arr[i] <= pivot.
+       Move j left  while arr[j] >  pivot.
+       If both are still on their own sides, swap arr[i], arr[j].
+  6. Return partitionIndex.
+
+  quicksort() then recursively sorts s..partitionIndex-1 and
+  partitionIndex+1..e.
+
+EXAMPLE
+  [4, 2, 7, 1, 9, 3]  pivot = 4
+  Elements <= 4 after the pivot: 2, 1, 3 -> count = 3
+  Pivot goes to index 3 -> [3, 2, 7, 4, 9, 1] -> after fixing sides
+  -> [3, 2, 1, 4, 9, 7]. Left of 4 is all smaller, right is larger.
+
+COMPLEXITY
+  Best / Average: O(n log n)   (balanced partitions)
+  Worst         : O(n^2)       (pivot is always smallest or largest,
+                                e.g. input is already sorted, since
+                                the first element is the pivot)
+  Space         : O(log n) average recursion stack, O(n) worst case.
+  In-place (no extra array). NOT stable.
+
+TIP
+  Try giving it a sorted array like 1 2 3 4 5 and an unsorted one and
+  compare times for large n to see the worst case in action.
+
+
+====================================================================
+6. FRACTIONAL KNAPSACK  (FractionalKnapsack.java)  - GREEDY
+====================================================================
+
+WHAT IT DOES
+  You have items with weight and profit and a bag of limited
+  capacity. You may take FRACTIONS of an item. Maximise profit.
+
+GREEDY IDEA
+  Always take the item with the best profit/weight ratio first.
+
+HOW IT WORKS
+  1. Build items[i] = {product number, weight, profit, ratio}.
+  2. Sort by ratio in DESCENDING order (bubble sort).
+  3. Go through the sorted items:
+       - If the whole item fits  -> take it all (fraction 1.0).
+       - Else take only the part that fits:
+             fraction = remainingCapacity / weight
+         add profit * fraction, and stop (bag is full).
+
+EXAMPLE
+  Items (weight, profit): P1(10, 60)  P2(20, 100)  P3(30, 120)
+  Capacity = 50
+  Ratios: P1 = 6, P2 = 5, P3 = 4
+  Take P1 fully (weight 10, profit 60)   -> remaining 40
+  Take P2 fully (weight 20, profit 100)  -> remaining 20
+  P3 does not fit: take 20/30 = 0.666... of it -> profit 80
+  Maximum profit = 60 + 100 + 80 = 240
+
+COMPLEXITY
+  Bubble sort makes it O(n^2). Using Arrays.sort or Merge Sort would
+  make it O(n log n). Space is O(n).
+
+NOTES
+  - The 2D double array is used just to keep each item's data
+    together while sorting.
+  - A weight of 0 would cause division by zero (ratio = infinity).
+    The program does not check for it.
+  - Fractional knapsack is solved optimally by greedy. The 0/1
+    version (Section 8) is NOT, which is why it needs DP.
+
+
+====================================================================
+7. JOB SEQUENCING WITH DEADLINES  (JobSequencing.java)  - GREEDY
+====================================================================
+
+WHAT IT DOES
+  Each job takes 1 unit of time, has a deadline and a profit. Pick
+  and schedule jobs so total profit is maximum and every chosen job
+  finishes by its deadline.
+
+GREEDY IDEA
+  Consider jobs in decreasing order of profit. Put each job in the
+  LATEST free slot on or before its deadline. If no slot is free,
+  skip the job.
+
+HOW IT WORKS
+  1. Read each job as: ID  Deadline  Profit  (in that order!).
+  2. Sort jobs by profit, highest first.
+  3. maxDeadline = largest deadline -> create that many slots.
+  4. For each job, scan slots from (deadline-1) down to 0 and place
+     it in the first empty one.
+  5. Print the schedule and the total profit.
+
+EXAMPLE (the one in the file's comment)
+  Jobs: (ID, Deadline, Profit)
+     1 2 100
+     2 1 19
+     3 2 27
+     4 1 25
+     5 3 15
+  Sorted by profit: J1(100), J3(27), J4(25), J2(19), J5(15)
+  Slots: [ _ , _ , _ ]  (maxDeadline = 3)
+    J1 deadline 2 -> slot 2 (index 1)       [ _ , J1, _ ]
+    J3 deadline 2 -> slot 2 taken, slot 1   [ J3, J1, _ ]
+    J4 deadline 1 -> slot 1 taken, none: skip
+    J2 deadline 1 -> slot 1 taken, none: skip
+    J5 deadline 3 -> slot 3                 [ J3, J1, J5 ]
+  Total profit = 27 + 100 + 15 = 142
+
+COMPLEXITY
+  Sorting O(n log n) + placing jobs O(n * d) where d = max deadline.
+  If d <= n this becomes O(n^2). Space O(n + d).
+
+NOTE
+  The comment in the file lists "Job id, Profits, Deadline" in that
+  order, but the code READS: id, deadline, profit. Type them in the
+  code's order.
+
+
+====================================================================
+8. 0/1 KNAPSACK USING DYNAMIC PROGRAMMING
+   (KnapsackDynamicProgramming.java)
+====================================================================
+
+WHAT IT DOES
+  Same bag problem, but each item is taken WHOLE or not at all
+  (0 or 1). Greedy fails here, so we use DP.
+
+DP TABLE
+  dp[i][w] = best value using the first i items with capacity w.
+
+  Rule for item i (weight wt, value v):
+     if wt <= w:
+         dp[i][w] = max( dp[i-1][w],            // skip the item
+                         v + dp[i-1][w - wt] )  // take the item
+     else:
+         dp[i][w] = dp[i-1][w]                  // too heavy, skip
+  Row 0 and column 0 stay 0 (no items / no capacity).
+  The answer is dp[n][capacity].
+
+BACKTRACKING (finding WHICH items were chosen)
+  Start at i = n, capacity = W. If dp[i][cap] != dp[i-1][cap], item
+  i was taken: record it and reduce cap by its weight. Move to i-1.
+
+EXAMPLE
+  Capacity = 50
+  Items (weight, value): 1(10, 60)  2(20, 100)  3(30, 120)
+  Result: maximum value = 220
+  Selected items: [3, 2]   (weights 30 + 20 = 50, values 120 + 100)
+  Note the list is printed from the last item to the first, because
+  backtracking goes from i = n down to 1.
+
+COMPLEXITY
+  Time O(n * W), space O(n * W) where W is the capacity.
+  (This is "pseudo-polynomial": it depends on the VALUE of W, not
+  just the number of input items.)
+
+TIP
+  Compare with Section 6 using the same items: the fractional
+  version gives 240, the 0/1 version gives 220.
+
+
+====================================================================
+9. LONGEST COMMON SUBSEQUENCE  (LCS.java)
+====================================================================
+
+WHAT IT DOES
+  Finds the longest sequence of characters that appears in BOTH
+  strings in the same order (not necessarily next to each other).
+
+DP TABLE
+  dp[i][j] = LCS length of the first i chars of str1 and the first
+  j chars of str2.
+
+     if str1[i-1] == str2[j-1]:  dp[i][j] = dp[i-1][j-1] + 1
+     else:                       dp[i][j] = max(dp[i-1][j], dp[i][j-1])
+
+RECONSTRUCTING THE ACTUAL STRING
+  Start at (m, n) and walk back:
+    - characters match   -> add to result, move diagonally (i--, j--)
+    - otherwise          -> move toward the larger neighbour
+  The characters were collected backwards, so the result is reversed
+  at the end (lcs.reverse()).
+
+EXAMPLE
+  str1 = AGGTAB     str2 = GXTXAYB
+  LCS = GTAB        Length = 4
+
+INPUT NOTE
+  Uses sc.nextLine(), so spaces are allowed in the strings.
+
+COMPLEXITY
+  Time O(m * n), space O(m * n).
+  There can be more than one valid LCS of the same length; the code
+  prints one of them (it prefers moving up when values tie).
+
+
+====================================================================
+10. MASTER METHOD  (MasterMethod.java)
+====================================================================
+
+WHAT IT DOES
+  Solves recurrences of the form
+        T(n) = a * T(n/b) + f(n),   where f(n) = n^k
+  using the Master Theorem.
+
+THE THEOREM (as implemented)
+  Compute  c = log_b(a)  (the code does Math.log(a) / Math.log(b)).
+  Compare k with c:
+     k <  c   -> Case 1: T(n) = O(n^c)
+     k == c   -> Case 2: T(n) = O(n^k * log n)
+     k >  c   -> Case 3: T(n) = O(n^k)
+  (The code treats k == c when they differ by less than 0.000001,
+   to avoid floating point errors.)
+
+EXAMPLES
+  a=2, b=2, k=1 (Merge Sort):  c = 1 -> Case 2 -> O(n log n)
+  a=4, b=2, k=1             :  c = 2 -> Case 1 -> O(n^2)
+  a=1, b=2, k=1             :  c = 0 -> Case 3 -> O(n)
+
+LIMITATIONS
+  - f(n) must look like n^k with k an INTEGER here (it is read with
+    nextInt). Forms like n log n or n^1.5 are not supported.
+  - b must be at least 2 (b = 1 makes log(b) = 0, dividing by zero).
+  - a must be at least 1.
+  - The program only does arithmetic, so it runs in O(1).
+
+
+====================================================================
+11. RECURSION TREE  (RecursionTree.java)
+====================================================================
+
+WHAT IT DOES
+  Simulates the recursion tree for a recurrence like
+        T(n) = T(n/2) + n
+  by printing the work done at each level.
+
+HOW IT WORKS
+  A while loop: at each level, work = current problem size. Add it
+  to totalWork, print it, then halve n and go to the next level.
+
+EXAMPLE (n = 16)
+  Level 0: Problem Size = 16, Work = 16
+  Level 1: Problem Size = 8,  Work = 8
+  Level 2: Problem Size = 4,  Work = 4
+  Level 3: Problem Size = 2,  Work = 2
+  Level 4: Problem Size = 1,  Work = 1
+  Total Levels: 5      Total Work: 31
+
+  Total work = n + n/2 + n/4 + ... which is about 2n, so the
+  recurrence solves to O(n). This is the "Time Complexity: O(n)"
+  that the program prints.
+
+TWO DIFFERENT "COMPLEXITIES" IN THIS FILE (don't get confused)
+  - Printed message "O(n)": the answer to the RECURRENCE (the sum of
+    the work over all levels).
+  - Comment "O(log n)": how many times the PROGRAM'S LOOP runs
+    (n is halved each time), i.e. the running time of this
+    simulation itself.
+  Both are correct, but they describe different things.
+
+
+====================================================================
+12. B-TREE  (BTreeDemo.java)
+====================================================================
+
+WHAT IT IS
+  A self-balancing multi-way search tree used in databases and file
+  systems. Nodes hold many keys, so the tree is short and disk reads
+  are few.
+
+TERMS (t = minimum degree, entered by the user, must be >= 2)
+  - Each node holds at most 2t - 1 keys.
+  - Each non-root node holds at least t - 1 keys.
+  - An internal node with k keys has k + 1 children.
+  - All leaves are at the same depth.
+  - Keys inside a node are kept sorted.
+
+CLASSES
+  BTreeNode : keys[], child[], n (current number of keys), leaf flag.
+     traverse()      in-order print of all keys (sorted output)
+     search(key)     find the first key >= target; if equal -> found,
+                     else go to the right child (or null on a leaf)
+     insertNonFull() insert into a node that is not full
+     splitChild()    split a full child into two
+  BTree : holds the root and offers insert(), search(), traverse().
+
+HOW INSERT WORKS (single pass, "proactive splitting")
+  1. If the tree is empty -> create a leaf root.
+  2. If the root is full (2t-1 keys): create a new root, split the old
+     root. The tree grows taller by one level (the ONLY way a B-Tree
+     grows in height).
+  3. Walk down to the right leaf. On the way, if the next child is
+     full, split it BEFORE entering it. So there is always room.
+  4. Insert the key into the leaf, keeping order.
+
+HOW splitChild WORKS
+  A full child y has 2t-1 keys. The MIDDLE key (index t-1) moves up
+  into the parent. The upper t-1 keys (and their children) go into a
+  new node z. y keeps the lower t-1 keys.
+
+EXAMPLE (t = 2, so max 3 keys per node)
+  Insert 10, 20, 30  ->  [10 | 20 | 30]   (root is full)
+  Insert 40:  root full -> split. Middle key 20 moves up.
+                      [20]
+                     /    \
+                 [10]      [30 | 40]
+  Traverse prints: 10 20 30 40
+
+MENU
+  1 Insert, 2 Search, 3 Display (in-order), 4 Exit (prints time
+  since the program started, which includes your typing time).
+
+COMPLEXITY
+  Insert / Search O(log n), traverse O(n). Recursion uses O(log n)
+  stack space; the tree itself uses O(n).
+
+NOTE
+  Duplicate keys are NOT checked, so inserting the same key twice
+  stores it twice.
+
+
+====================================================================
+13. B+ TREE  (BPlusTreeDemo.java)
+====================================================================
+
+WHAT IT IS
+  A variation of the B-Tree where:
+  - ALL actual keys/data live in the LEAF nodes.
+  - Internal nodes only hold copies of keys as signposts
+    (separators) for navigation.
+  - Leaves are connected in a linked list (the "next" pointer), so
+    range queries and sorted printing are very fast.
+
+TERMS (order = max number of children, entered by user, must be >= 3)
+  - A node holds at most (order - 1) keys.
+  - An internal node with k keys has k + 1 children.
+
+CLASSES
+  BPlusNode : keys[], children[], next (leaf link), n, leaf flag.
+  BPlusTree : root, order and the methods below.
+
+METHODS
+  insert(key)
+     If the root is full, create a new root and split. Then call
+     insertNonFull.
+  insertNonFull(node, key)
+     Leaf: shift keys to make room, insert in sorted order, reject
+           duplicates ("Duplicate key not allowed!").
+     Internal: find the correct child (move right while
+           key >= separator); split it first if it is full; recurse.
+  splitChild(parent, index)
+     LEAF split: the right half keeps its keys, and the first key of
+        the right node is COPIED up to the parent. (The key stays in
+        the leaf, because all data must stay in leaves.) The new leaf
+        is linked into the "next" chain.
+     INTERNAL split: the middle key is MOVED up (like a B-Tree), not
+        copied.
+  search(key)
+     Descend from the root to a leaf using the separators, then scan
+     the leaf.
+  display()
+     Go to the leftmost leaf and follow the next pointers, printing
+     all keys: automatically in sorted order.
+
+EXAMPLE (order = 4, so max 3 keys per node)
+  Insert 10, 20, 30 -> root leaf [10 20 30]
+  Insert 40: root full -> new root, leaf splits:
+                   [30]
+                  /    \
+           [10 20] --> [30 40]       (leaves are linked)
+  Note 30 appears BOTH in the root (as a signpost) and in the leaf
+  (as real data). Display prints: 10 20 30 40
+
+B-TREE vs B+ TREE
+  B-Tree : keys and data in every node, no leaf links.
+  B+ Tree: data only in leaves, leaves linked, internal keys are
+           copies. Better for range scans and sequential access.
+
+COMPLEXITY
+  Insert / Search O(log n), display O(n). Insert uses O(log n)
+  recursion space; search O(1) (it is iterative).
+
+
+====================================================================
+14. ABOUT THE .class FILES
+====================================================================
+
+BTree.class, BTreeNode.class and BTreeDemo.class are COMPILED
+versions (Java bytecode) of BTreeDemo.java. They are generated
+automatically by "javac BTreeDemo.java" (one class per file).
+You do not edit them; they are not readable as text. Delete them
+and recompile whenever you change the .java file. To run:
+    java BTreeDemo
+
+
+====================================================================
+15. MISTAKES / THINGS TO WATCH OUT FOR
+====================================================================
+
+1) BinarySearch.java: the comment says O(n). Correct is O(log n).
+
+2) RecursionTree.java: the printed "O(n)" vs the comment "O(log n)"
+   look contradictory but measure different things (see Section 11).
+
+3) FractionalKnapsack.java: bubble sort makes it O(n^2); a better
+   sort gives O(n log n), which is the textbook complexity.
+
+4) BPlusTreeDemo.java: in a leaf, the duplicate check happens AFTER
+   the keys are shifted, and the leaf split happens BEFORE the
+   duplicate is detected. The stored data stays correct, but a
+   duplicate insert can still cause an unnecessary split.
+
+5) BTreeDemo.java: no duplicate checking.
+
+6) MasterMethod.java: only works when f(n) = n^k with integer k and
+   b >= 2.
+
+7) Timings include user input time in the B-Tree and B+ Tree menus
+   (the clock starts before the menu loop). For benchmarking, time
+   just the insert/search calls.
+
+8) All programs assume valid input (no try/catch). Typing letters
+   where a number is expected will crash with InputMismatchException.
+
+
+====================================================================
+16. COMMON VIVA QUESTIONS (with short answers)
+====================================================================
+
+Q: Why must binary search input be sorted?
+A: It discards half the array by comparing with the middle element,
+   which is only valid if the order is known.
+
+Q: Why is merge sort always O(n log n) but quick sort not?
+A: Merge sort always splits exactly in half. Quick sort's split
+   depends on the pivot and can be very unbalanced (worst O(n^2)).
+
+Q: Which is stable: merge sort or quick sort?
+A: Merge sort (this implementation) is stable; quick sort is not.
+
+Q: Why does greedy work for fractional knapsack but not 0/1?
+A: In the fractional version you can fill leftover space exactly
+   with a piece of the next best item. In 0/1 you cannot, so the best
+   ratio first can leave wasted capacity.
+
+Q: What is the optimal substructure in LCS / 0/1 knapsack?
+A: The optimal answer for the full problem is built from optimal
+   answers for smaller prefixes/capacities, stored in the DP table.
+
+Q: What do the three Master Theorem cases mean?
+A: Case 1: the leaves dominate the work. Case 2: every level does
+   equal work (extra log n factor). Case 3: the root dominates.
+
+Q: How does a B-Tree grow in height?
+A: Only when the root splits.
+
+Q: Why are B+ Trees preferred in databases?
+A: Linked leaves give fast range queries and ordered scans, and
+   internal nodes hold only keys, so more keys fit per node and the
+   tree is shorter.
+
+====================================================================
+  END OF GUIDE
+====================================================================

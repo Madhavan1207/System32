@@ -105,3 +105,17 @@ public class KnapsackDynamicProgramming {
         sc.close();
     }
 }
+
+// TIME COMPLEXITY:
+// Filling DP Table: O(n * W)
+// Backtracking: O(n)
+// Overall Time Complexity: O(n * W)
+
+// SPACE COMPLEXITY:
+// DP Table: O(n * W)
+// Selected Items List: O(n)
+// Overall Space Complexity: O(n * W)
+
+// Where:
+// - n = Number of items
+// - W = Knapsack capacity

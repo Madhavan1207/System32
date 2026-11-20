@@ -106,3 +106,18 @@ public class JobSequencing {
 // 2)Job id = 1, 2, 3, 4, 5 
 // 2)Profits : 100, 19, 27, 25, 15
 // 3)Deadline: 2, 1, 2, 1, 3
+
+// TIME COMPLEXITY:
+// Sorting Jobs: O(n log n)
+// Finding Maximum Deadline: O(n)
+// Job Sequencing: O(n * d), where d = Maximum Deadline
+// Overall Time Complexity: O(n log n + n * d)
+
+// SPACE COMPLEXITY:
+// Jobs Array: O(n)
+// Slots Array: O(d), where d = Maximum Deadline
+// Overall Space Complexity: O(n + d)
+
+// Note: If maximum deadline d is at most n, the overall worst-case complexity becomes:
+// - Time: O(n²)
+// - Space: O(n)
